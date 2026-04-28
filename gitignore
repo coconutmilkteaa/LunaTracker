@@ -1,6 +1,8 @@
 # personal data — never commit
 data.json
 *.backup
+foxy-data.json
+foxy-data.csv
 luna-data.json
 luna-data.csv
 

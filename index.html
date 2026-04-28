@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>luna // cycle_tracker</title>
+<title>foxy // tracking</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;1,300;1,400;1,500&family=Nunito:wght@300;400;500&family=JetBrains+Mono:wght@300;400&family=Crimson+Pro:ital,wght@0,300;1,300&display=swap" rel="stylesheet"/>
@@ -744,7 +744,7 @@ input[type=range].grad-slider::-moz-range-thumb{
   <div class="sparkle s3">✧</div>
 
   <div class="top-row">
-    <div class="tracker-pill">// CYCLE_TRACKER</div>
+    <div class="tracker-pill">// FOXY_TRACKING</div>
     <div class="hdr-tools">
       <div class="pal-wrap">
         <div class="pal-icon" onclick="togglePalDrop()" title="palette">✦</div>
@@ -764,7 +764,7 @@ input[type=range].grad-slider::-moz-range-thumb{
   </div>
 
   <div class="hero">
-    <h1 class="hero-title" id="heroTitle">luna</h1>
+    <h1 class="hero-title" id="heroTitle">foxy</h1>
     <p class="hero-sub" id="heroSub">>> LOG // PREDICT // OBSERVE</p>
     <button class="name-edit-btn" onclick="openNameModal()">edit name</button>
     <hr class="hero-rule"/>
@@ -784,7 +784,7 @@ input[type=range].grad-slider::-moz-range-thumb{
       </div>
       <div class="log-block">
         <div class="log-block-label">// PREVIEW</div>
-        <div class="name-preview" id="namePreview">good morning, luna</div>
+        <div class="name-preview" id="namePreview">good morning, foxy</div>
       </div>
       <button class="sbtn" onclick="saveName()">+ SAVE</button>
     </div>
@@ -1244,9 +1244,19 @@ function saveLog(){
 }
 
 function save(){
-  try{localStorage.setItem('luna_s',JSON.stringify(S));}catch(e){}
+  try{localStorage.setItem('foxy_s',JSON.stringify(S));}catch(e){}
 }
-function loadS(){try{const s=localStorage.getItem('luna_s');if(s)S={...S,...JSON.parse(s)};}catch(e){}}
+function loadS(){
+  try{
+    // one-time migration from old luna_s key
+    if(!localStorage.getItem('foxy_s')){
+      const old=localStorage.getItem('luna_s');
+      if(old){localStorage.setItem('foxy_s',old);}
+    }
+    const s=localStorage.getItem('foxy_s');
+    if(s)S={...S,...JSON.parse(s)};
+  }catch(e){}
+}
 function getLast30(){return Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-29+i);return d.toISOString().slice(0,10);});}
 
 function renderChart(type){
@@ -1268,8 +1278,8 @@ function renderChart(type){
 }
 
 function switchChart(t,el){curChart=t;document.querySelectorAll('.ctab').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderChart(t);}
-function exportJSON(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='luna-data.json';a.click();}
-function exportCSV(){const rows=[['date','mood','energy','sleep','cramps','flow','skin','notes']];for(const[d,l]of Object.entries(S.logs))rows.push([d,(l.mood||[]).join('|'),l.energy||'',l.sleep||'',(l.cramps||[]).join('|'),(l.flow||[]).join('|'),(l.skin||[]).join('|'),l.notes||'']);const b=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='luna-data.csv';a.click();}
+function exportJSON(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='foxy-data.json';a.click();}
+function exportCSV(){const rows=[['date','mood','energy','sleep','cramps','flow','skin','notes']];for(const[d,l]of Object.entries(S.logs))rows.push([d,(l.mood||[]).join('|'),l.energy||'',l.sleep||'',(l.cramps||[]).join('|'),(l.flow||[]).join('|'),(l.skin||[]).join('|'),l.notes||'']);const b=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='foxy-data.csv';a.click();}
 function importData(){const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{S={...S,...JSON.parse(ev.target.result)};save();init();}catch(e){alert('invalid file');}};r.readAsText(e.target.files[0]);};inp.click();}
 
 let phPage=1, pePage=1;
@@ -1384,7 +1394,7 @@ function getGreeting(name){
   else if(h<17)g='good afternoon,';
   else if(h<21)g='good evening,';
   else g='goodnight,';
-  return name?`${g} ${name}`:'luna';
+  return name?`${g} ${name}`:'foxy';
 }
 
 function updateGreeting(){
@@ -1393,9 +1403,9 @@ function updateGreeting(){
   if(S.userName){
     t.textContent=getGreeting(S.userName);
     t.style.fontSize='44px';
-    sub.textContent='>> LUNA // CYCLE_TRACKER';
+    sub.textContent='>> FOXY // TRACKING';
   } else {
-    t.textContent='luna';
+    t.textContent='foxy';
     t.style.fontSize='';
     sub.textContent='>> LOG // PREDICT // OBSERVE';
   }
@@ -1410,7 +1420,7 @@ function openNameModal(){
 function closeNameModal(){document.getElementById('nameModal').classList.remove('open');}
 function updateNamePreview(){
   const v=document.getElementById('nameInput').value.trim();
-  document.getElementById('namePreview').textContent=v?getGreeting(v):'luna';
+  document.getElementById('namePreview').textContent=v?getGreeting(v):'foxy';
 }
 function saveName(){
   S.userName=document.getElementById('nameInput').value.trim();
