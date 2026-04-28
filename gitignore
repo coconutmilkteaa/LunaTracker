@@ -1,0 +1,27 @@
+# personal data — never commit
+data.json
+*.backup
+luna-data.json
+luna-data.csv
+
+# node stuff (only needed for running locally)
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# environment / secrets
+.env
+.env.local
