@@ -404,6 +404,21 @@ input[type=range].grad-slider::-moz-range-thumb{
 .date-display:hover{border-color:var(--a1);}
 .date-display .ph{color:var(--mu);}
 
+.date-input-visible{
+  width:100%;background:var(--ibg);border:1px solid var(--ibd);
+  border-radius:9px;padding:10px 12px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.05em;
+  color:var(--tx);cursor:pointer;outline:none;
+  transition:border-color .2s;
+  -webkit-appearance:none;appearance:none;
+}
+.date-input-visible:hover{border-color:var(--a1);}
+.date-input-visible:focus{border-color:var(--a1);}
+.date-input-visible::-webkit-calendar-picker-indicator{
+  filter:invert(0.5);cursor:pointer;opacity:.6;
+}
+.date-input-visible::-webkit-calendar-picker-indicator:hover{opacity:1;}
+
 /* daily log */
 .log-block{margin-bottom:1rem;}
 .log-block-label{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--mu);margin-bottom:8px;}
@@ -1021,6 +1036,41 @@ input[type=range].grad-slider::-moz-range-thumb{
   line-height:1;
 }
 
+/* ===== FOOTER ===== */
+.footer-section{
+  display:flex;align-items:center;justify-content:center;gap:40px;
+  padding:3rem 2rem 2rem;margin-top:1rem;
+  border-top:1px solid var(--bd);
+}
+.footer-ring-wrap{position:relative;width:160px;height:160px;flex-shrink:0;}
+.footer-ring-wrap canvas{display:block;}
+.footer-ring-center{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.footer-ring-day{
+  font-family:var(--serif);font-style:italic;font-size:32px;
+  font-weight:400;color:var(--tx);line-height:1;
+}
+.footer-ring-phase{
+  font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  color:var(--mu);margin-top:4px;
+}
+.footer-meta{text-align:center;}
+.footer-tagline{
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;
+  color:var(--mu2);margin-bottom:6px;
+}
+.footer-sub{
+  font-family:var(--script);font-style:italic;font-size:12px;
+  color:var(--mu);margin-bottom:14px;line-height:1.4;
+}
+.footer-quote{
+  font-family:var(--script);font-style:italic;font-size:15px;
+  color:var(--a1);line-height:1.5;max-width:280px;
+}
+
 /* responsive */
 @media (max-width:880px){
   .grid-main{grid-template-columns:1fr;}
@@ -1029,6 +1079,7 @@ input[type=range].grad-slider::-moz-range-thumb{
   .phase-grid{grid-template-columns:repeat(2,1fr);}
   .stats-row{grid-template-columns:1fr;}
   .vb-board{grid-template-columns:repeat(auto-fill, minmax(90px, 1fr));}
+  .footer-section{flex-direction:column;gap:20px;}
 }
 </style>
 </head>
@@ -1279,13 +1330,11 @@ input[type=range].grad-slider::-moz-range-thumb{
         <div class="date-row">
           <div class="df">
             <label>// LAST PERIOD START</label>
-            <div class="date-display" onclick="pickDate('pS')"><span id="dspS" class="ph">select date</span><span style="font-size:11px;color:var(--mu);">⌄</span></div>
-            <input type="date" id="pS" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" onchange="onDate('s',this.value)"/>
+            <input type="date" id="pS" class="date-input-visible" onchange="onDate('s',this.value)"/>
           </div>
           <div class="df">
             <label>// LAST PERIOD END</label>
-            <div class="date-display" onclick="pickDate('pE')"><span id="dspE" class="ph">select date</span><span style="font-size:11px;color:var(--mu);">⌄</span></div>
-            <input type="date" id="pE" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" onchange="onDate('e',this.value)"/>
+            <input type="date" id="pE" class="date-input-visible" onchange="onDate('e',this.value)"/>
           </div>
         </div>
       </div>
@@ -1390,6 +1439,22 @@ input[type=range].grad-slider::-moz-range-thumb{
       </div>
     </div>
   </div>
+
+  <!-- Footer -->
+  <div class="footer-section">
+    <div class="footer-ring-wrap">
+      <canvas id="cycleRing" width="160" height="160"></canvas>
+      <div class="footer-ring-center" id="footerRingLabel">
+        <div class="footer-ring-day" id="footerRingDay">—</div>
+        <div class="footer-ring-phase" id="footerRingPhase">set cycle</div>
+      </div>
+    </div>
+    <div class="footer-meta">
+      <div class="footer-tagline">foxy // tracking</div>
+      <div class="footer-sub">built with care · your data stays local</div>
+      <div class="footer-quote" id="footerQuote">"listen to your body — it's always talking."</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1490,7 +1555,7 @@ function applyPal(i,sv=true){
   const el=document.getElementById('pt');
   for(const[k,v]of Object.entries(vars))el.style.setProperty(k,v);
   document.querySelectorAll('.pbtn').forEach((b,j)=>b.classList.toggle('on',j===i));
-  renderPhaseCards();renderMoodboard();renderCal();updateGrad();
+  renderPhaseCards();renderMoodboard();renderCal();updateGrad();drawCycleRing();
   if(sv)save();
 }
 
@@ -1552,27 +1617,18 @@ function renderMoodboard(){
   }
 }
 
-function pickDate(id){
-  const inp=document.getElementById(id);
-  inp.style.cssText='position:fixed;top:0;left:0;opacity:0;width:1px;height:1px;pointer-events:all;';
-  inp.focus();inp.click();
-  setTimeout(()=>inp.style.cssText='position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;',800);
-}
 function fmtDate(d){if(!d)return'';return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 
 function onDate(type,val){
   if(type==='s'){
     if(S.lastStart && S.lastStart!==val){
-      // archive previous to history
       S.periodHistory=S.periodHistory||[];
       S.periodHistory.unshift({start:S.lastStart,end:S.lastEnd||''});
       S.periodHistory=S.periodHistory.slice(0,12);
     }
     S.lastStart=val;
-    const sp=document.getElementById('dspS');sp.textContent=val?fmtDate(val):'select date';sp.classList.toggle('ph',!val);
   } else {
     S.lastEnd=val;
-    const ep=document.getElementById('dspE');ep.textContent=val?fmtDate(val):'select date';ep.classList.toggle('ph',!val);
   }
   updateStats();renderHistory();
 }
@@ -1587,10 +1643,6 @@ function markPeriodToday(){
   S.lastStart=t;S.lastEnd='';
   document.getElementById('pS').value=t;
   document.getElementById('pE').value='';
-  document.getElementById('dspS').textContent=fmtDate(t);
-  document.getElementById('dspS').classList.remove('ph');
-  document.getElementById('dspE').textContent='select date';
-  document.getElementById('dspE').classList.add('ph');
   updateStats();renderHistory();
 }
 
@@ -1611,7 +1663,7 @@ function updateStats(){
   document.getElementById('svPhase').textContent=PHASES[pi].name;
   document.getElementById('nextEst').textContent=nextStr+' · in '+Math.max(0,daysLeft)+' days';
   renderCal();renderPhaseCards();renderMoodboard();save();
-  updatePMSBanner();updatePredConf();
+  updatePMSBanner();updatePredConf();drawCycleRing();
 }
 
 function renderCal(){
@@ -1639,12 +1691,23 @@ function renderCal(){
       }
     }
     const hl=S.logs[ds]&&(S.logs[ds].mood||S.logs[ds].energy);
-    html+=`<div class="${cls}">${d}${hl?'<div class="cal-dot"></div>':''}</div>`;
+    const future=date>today;
+    html+=`<div class="${cls}" ${future?'':'onclick="calDayClick(\''+ds+'\')'}" style="${future?'opacity:.4;cursor:default;':''}">${d}${hl?'<div class="cal-dot"></div>':''}</div>`;
   }
   grid.innerHTML=html;
 }
 
 function calNav(dir){calMo+=dir;if(calMo>11){calMo=0;calYear++;}if(calMo<0){calMo=11;calYear--;}renderCal();}
+
+function calDayClick(ds){
+  // jump the daily log to this date
+  const todayISO=new Date().toISOString().slice(0,10);
+  if(ds>todayISO)return;
+  currentLogDate=ds;
+  document.getElementById('logDate').value=ds;
+  refreshLogUI();
+  document.getElementById('logDatePicker').scrollIntoView({behavior:'smooth',block:'center'});
+}
 
 // current date being edited in daily log card (defaults to today)
 let currentLogDate=new Date().toISOString().slice(0,10);
@@ -2449,6 +2512,69 @@ function renderSleepCycleChart(){
   chartInst=new Chart(canvas,{type:'bar',data:{labels,datasets:[{label:'sleep quality',data:days.map(d=>(S.logs[d]||{}).sleep||null),backgroundColor:phaseColors.map(c=>c+'88'),borderColor:phaseColors,borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:mu,font:{family:"'JetBrains Mono'",size:10,weight:'300'}}}},scales:{x:{ticks:{color:mu,font:{family:"'JetBrains Mono'",size:9},maxTicksLimit:8},grid:{color:gc}},y:{min:0,max:5,ticks:{color:mu,font:{family:"'JetBrains Mono'",size:9},stepSize:1},grid:{color:gc}}}}});
 }
 
+// ===== FOOTER CYCLE RING =====
+function drawCycleRing(){
+  const canvas=document.getElementById('cycleRing');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const w=canvas.width,h=canvas.height,cx=w/2,cy=h/2,r=62;
+  ctx.clearRect(0,0,w,h);
+  const ph1=cs('--ph1'),ph2=cs('--ph2'),ph3=cs('--ph3'),ph4=cs('--ph4');
+  const bd=cs('--bd')||'rgba(255,255,255,0.1)';
+  // draw background ring
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle=bd;ctx.lineWidth=12;ctx.stroke();
+  if(!S.lastStart){
+    document.getElementById('footerRingDay').textContent='—';
+    document.getElementById('footerRingPhase').textContent='SET CYCLE';
+    return;
+  }
+  // draw phase arcs
+  const phases=[
+    {frac:5/S.cycleLen,color:ph1},
+    {frac:8/S.cycleLen,color:ph2},
+    {frac:3/S.cycleLen,color:ph3},
+    {frac:(S.cycleLen-16)/S.cycleLen,color:ph4}
+  ];
+  const startAngle=-Math.PI/2;
+  let angle=startAngle;
+  phases.forEach(p=>{
+    const sweep=p.frac*Math.PI*2;
+    ctx.beginPath();ctx.arc(cx,cy,r,angle,angle+sweep);
+    ctx.strokeStyle=p.color;ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();
+    angle+=sweep;
+  });
+  // draw current day marker
+  const sd=new Date(S.lastStart+'T00:00:00');
+  const daysSince=Math.floor((today-sd)/86400000);
+  const doc=Math.max(1,(daysSince%S.cycleLen)+1);
+  const markerAngle=startAngle+(doc/S.cycleLen)*Math.PI*2;
+  const mx=cx+Math.cos(markerAngle)*r;
+  const my=cy+Math.sin(markerAngle)*r;
+  ctx.beginPath();ctx.arc(mx,my,7,0,Math.PI*2);
+  ctx.fillStyle=cs('--a1')||'#d68aa4';ctx.fill();
+  ctx.strokeStyle=cs('--bg')||'#1f1a2e';ctx.lineWidth=2;ctx.stroke();
+  // update label
+  const pi=doc<=5?0:doc<=13?1:doc<=16?2:3;
+  document.getElementById('footerRingDay').textContent=doc;
+  document.getElementById('footerRingPhase').textContent=PHASES[pi].name.toUpperCase();
+}
+
+const FOOTER_QUOTES=[
+  "listen to your body — it's always talking.",
+  "cycles are not weaknesses. they're data.",
+  "knowing your rhythm is a superpower.",
+  "you contain multitudes, phase by phase.",
+  "tracking is an act of self-respect.",
+  "your body keeps score — listen gently.",
+  "every phase has its own kind of magic."
+];
+function setFooterQuote(){
+  const el=document.getElementById('footerQuote');if(!el)return;
+  const seed=new Date().toDateString()+'footer';
+  let hash=0;for(let i=0;i<seed.length;i++)hash=((hash<<5)-hash)+seed.charCodeAt(i);
+  el.textContent='"'+FOOTER_QUOTES[Math.abs(hash)%FOOTER_QUOTES.length]+'"';
+}
+
 function init(){
   loadS();
   renderPals();
@@ -2462,8 +2588,8 @@ function init(){
   document.getElementById('gradSlider').value=S.gradVal||50;
   document.getElementById('ambVol').value=S.ambientVol||50;
   updateGrad();
-  if(S.lastStart){document.getElementById('pS').value=S.lastStart;const sp=document.getElementById('dspS');sp.textContent=fmtDate(S.lastStart);sp.classList.remove('ph');}
-  if(S.lastEnd){document.getElementById('pE').value=S.lastEnd;const ep=document.getElementById('dspE');ep.textContent=fmtDate(S.lastEnd);ep.classList.remove('ph');}
+  if(S.lastStart){document.getElementById('pS').value=S.lastStart;}
+  if(S.lastEnd){document.getElementById('pE').value=S.lastEnd;}
   document.getElementById('todayDate').textContent=today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   // initialize log date picker
   const todayISO=new Date().toISOString().slice(0,10);
@@ -2479,6 +2605,8 @@ function init(){
   updatePMSBanner();
   updatePredConf();
   vbInit();
+  drawCycleRing();
+  setFooterQuote();
   if(S.bgImage)applyBgImage();
   // restore ambient sound preference (don't auto-play, just highlight)
   if(S.ambientSound&&S.ambientSound!=='off'){
